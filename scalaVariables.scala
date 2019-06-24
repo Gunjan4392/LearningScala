@@ -1,3 +1,10 @@
+/**	Variables
+		val -- immutable -- cant change the value of variable
+		var -- mutable -- value of variable can be changed
+		Initialization of variable is necessary in Scala
+		Reassignment of variable is not allowed in case of val.
+**/
+
 //Print the greater number
 		val c=(math.random * 100).toInt
 		println("Value of c = " + c)
