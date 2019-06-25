@@ -13,3 +13,12 @@ object A{
 //Right click --> Run Scala Console --> In scala console, run,  "A"
 //Alt+Enter for imports
 //Ctrl+Enter for running commands
+
+/**
+object B{
+  val a = new A("Yo Yo Honey Singh..!!")
+  println(a.message)
+}
+
+//In the object B, a.message will show error --> "Symbol message is inaccessible from this place"
+**/
