@@ -12,105 +12,70 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.apache.spark.sql.internal._
 import com.sun.org.apache.xalan.internal.xsltc.compiler.ForEach
+import org.apache.log4j._
+import org.apache.spark.rdd.RDD
 
-
-object stackFlattenJSON {
-  
-  
-    System.setProperty("hadoop.home.dir", "D:\\Spark\\WinUtils")
+object vandanaFlatten {
+ 
+    val logger = Logger.getLogger("org")
+  System.setProperty("hadoop.home.dir", "D:\\Spark\\WinUtils")
     System.setProperty("spark.driver.allowMultipleContexts", "true")
     val conf = new SparkConf().setAppName("flattenJSON").setMaster("local[*]").set("spark.driver.bindAddress","127.0.0.1")
   val spark = SparkSession.builder().config(conf).getOrCreate()
     val sc = new SparkContext("local", "flattenJSON") // used for RDD operations only
     val sqlContext = new SQLContext(sc)
     import spark.implicits._
+  
     
+    
+  def flattenDataframe(df: DataFrame): DataFrame = {
 
-  def flattenDataFrame(df: DataFrame): DataFrame = {
+    val fields = df.schema.fields
+    val fieldNames = fields.map(x => x.name)
+    val length = fields.length
 
-var flattenedDf: DataFrame = df
+    for (i <- 0 to fields.length - 1) {
+      val field = fields(i)
+      val fieldtype = field.dataType
+      val fieldName = field.name
 
-println("test2")
+      println("Field is: "+field)
+      println("fieldType is: "+fieldtype)
+      println("fieldName is "+fieldName)
 
-if (isNested(df)) {
-println("test4")
-  val flattenedSchema: Array[(Column, Boolean)] = flattenSchema(df.schema)
-  var simpleColumns: List[Column] = List.empty[Column]
-  var complexColumns: List[Column] = List.empty[Column]
-
-  flattenedSchema.foreach {
-    case (col, isComplex) => {
-      if (isComplex) {
-        complexColumns = complexColumns :+ col
-      } else {
-        simpleColumns = simpleColumns :+ col
+      fieldtype match {
+        case arrayType: ArrayType =>
+          val fieldNamesExcludingArray = fieldNames.filter(_ != fieldName)
+          val fieldNamesAndExplode = fieldNamesExcludingArray ++ Array(s"explode_outer($fieldName) as $fieldName")
+          // val fieldNamesToSelect = (fieldNamesExcludingArray ++ Array(s"$fieldName.*"))
+          val explodedDf = df.selectExpr(fieldNamesAndExplode: _*)
+          return flattenDataframe(explodedDf)
+          
+        case structType: StructType =>
+          val childFieldnames = structType.fieldNames.map(childname => fieldName + "." + childname)
+          val newfieldNames = fieldNames.filter(_ != fieldName) ++ childFieldnames
+          val renamedcols = newfieldNames.map(x => (col(x.toString()).as(x.toString().replace(".", "_"))))
+          val explodedf = df.select(renamedcols: _*)
+          return flattenDataframe(explodedf)
+        case _ =>
       }
     }
+    df
   }
-
-  var crossJoinedDataFrame = df.select(simpleColumns: _*)
-  complexColumns.foreach(col => {
-    crossJoinedDataFrame = crossJoinedDataFrame.crossJoin(df.select(col))
-    crossJoinedDataFrame = flattenDataFrame(crossJoinedDataFrame)
-  })
-  crossJoinedDataFrame
-} else {
-  flattenedDf
-}
-  }
-
-private def flattenSchema(schema: StructType, prefix: String = null): Array[(Column, Boolean)] = {
-
-schema.fields.flatMap(field => {
-
-  val columnName = if (prefix == null) field.name else prefix + "." + field.name
-  field.dataType match {
-    case arrayType: ArrayType => {
-      val cols: Array[(Column, Boolean)] = Array[(Column, Boolean)](((explode_outer(col(columnName)).as(columnName.replace(".", "_"))), true))
-      cols
-    }
-    case structType: StructType => {
-      flattenSchema(structType, columnName)
-    }
-    case _ => {
-      val columnNameWithUnderscores = columnName.replace(".", "_")
-      val metadata = new MetadataBuilder().putString("encoding", "ZSTD").build()
-      Array(((col(columnName).as(columnNameWithUnderscores, metadata)), false))
-    }
-  }
-}).filter(field => field != None)
-}
-
-def isNested(df: DataFrame): Boolean = {
-  println("test3")
-df.schema.fields.flatMap(field => {
-
-  field.dataType match {
-    case arrayType: ArrayType => {
-      Array(true)
-    }
-    case mapType: MapType => {
-      Array(true)
-    }
-    case structType: StructType => {
-      Array(true)
-    }
-    case _ => {
-      Array(false)
-    }
-  }
-}).exists(b => b)
-}
-
-
+  
+  
+  
  def main(args: Array[String]) {
     //JSON file fetch
+   logger.setLevel(Level.ERROR)
     val df_JSON = sqlContext.read.option("multiLine", true).option("mode", "PERMISSIVE").json("D:/sample.json")
     println(df_JSON.schema)
-    println("test1")
-    val result4 = flattenDataFrame(df_JSON)
-    println("testfinal")
-    result4.show(false)
-     }
+    println("test1 ->"+df_JSON.count)
+    df_JSON.show(false)
+    import org.apache.spark.sql.Dataset
+val jsonDataset: Dataset[Row] = df_JSON
 
+val result4 = flattenDataframe(df_JSON)
+    result4.show(400)
+     }
 }
