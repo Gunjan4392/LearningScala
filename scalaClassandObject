@@ -1,0 +1,32 @@
+
+class Fraction(val n:Int, val d: Int) {
+  override def toString = n + "/" + d
+  def result = n/d.toDouble
+  def +(p: Fraction) = {new Fraction((n * p.d + d * p.n),(p.d*d))}
+  def -(p: Fraction) = {new Fraction((n * p.d - d * p.n),(p.d*d))}
+  def *(p: Fraction) = {new Fraction((n * p.n),(p.d * d))}
+  def /(p: Fraction) = {new Fraction((n * p.d),(d * p.n))}
+}
+
+object Fraction {
+  def main(args: Array[String]): Unit = {
+    val first = new Fraction(2,4)
+    println(first)
+    println(first.result)
+    val second = new Fraction(7,6)
+    println(second)
+    println(second.result)
+    val addition = first + second
+    println(addition)
+    println(addition.result)
+    val subtraction = second - first
+    println(subtraction)
+    println(subtraction.result)
+    val multiply = second * first
+    println(multiply)
+    println(multiply.result)
+    val division = second / first
+    println(division)
+    println(division.result)
+  }
+}
