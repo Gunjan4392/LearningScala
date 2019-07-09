@@ -4,29 +4,27 @@ import org.apache.spark._
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-//import org.json.JSONObject
 import java.util.Locale
 import org.json4s._
 import org.json4s.JsonAST.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.apache.spark.sql.internal._
-import com.sun.org.apache.xalan.internal.xsltc.compiler.ForEach
 import org.apache.log4j._
 import org.apache.spark.rdd.RDD
+import org.apache.commons.lang.StringEscapeUtils
 
-object vandanaFlatten {
+object flattenScala {
  
     val logger = Logger.getLogger("org")
-  System.setProperty("hadoop.home.dir", "D:\\Spark\\WinUtils")
+    val log: Logger = LogManager.getLogger(flattenScala.getClass)
+    System.setProperty("hadoop.home.dir", "D:\\Spark\\WinUtils")
     System.setProperty("spark.driver.allowMultipleContexts", "true")
     val conf = new SparkConf().setAppName("flattenJSON").setMaster("local[*]").set("spark.driver.bindAddress","127.0.0.1")
-  val spark = SparkSession.builder().config(conf).getOrCreate()
-    val sc = new SparkContext("local", "flattenJSON") // used for RDD operations only
+    val sc = new SparkContext(conf)
     val sqlContext = new SQLContext(sc)
+    val spark = sqlContext.sparkSession
     import spark.implicits._
-  
-    
     
   def flattenDataframe(df: DataFrame): DataFrame = {
 
@@ -38,10 +36,10 @@ object vandanaFlatten {
       val field = fields(i)
       val fieldtype = field.dataType
       val fieldName = field.name
-
-      println("Field is: "+field)
-      println("fieldType is: "+fieldtype)
-      println("fieldName is "+fieldName)
+      
+      log.info("Field is: "+field)
+      log.info("fieldType is: "+fieldtype)
+      log.info("fieldName is "+fieldName)
 
       fieldtype match {
         case arrayType: ArrayType =>
@@ -54,7 +52,7 @@ object vandanaFlatten {
         case structType: StructType =>
           val childFieldnames = structType.fieldNames.map(childname => fieldName + "." + childname)
           val newfieldNames = fieldNames.filter(_ != fieldName) ++ childFieldnames
-          val renamedcols = newfieldNames.map(x => (col(x.toString()).as(x.toString().replace(".", "_"))))
+          val renamedcols = newfieldNames.map(x => (col(x.toString()).as(x.toString().replace(".", "_").replaceAll("[^a-zA-Z0-9_-]", ""))))
           val explodedf = df.select(renamedcols: _*)
           return flattenDataframe(explodedf)
         case _ =>
@@ -67,15 +65,14 @@ object vandanaFlatten {
   
  def main(args: Array[String]) {
     //JSON file fetch
-   logger.setLevel(Level.ERROR)
-    val df_JSON = sqlContext.read.option("multiLine", true).option("mode", "PERMISSIVE").json("D:/sample.json")
-    println(df_JSON.schema)
-    println("test1 ->"+df_JSON.count)
-    df_JSON.show(false)
-    import org.apache.spark.sql.Dataset
-val jsonDataset: Dataset[Row] = df_JSON
-
-val result4 = flattenDataframe(df_JSON)
-    result4.show(400)
-     }
+    logger.setLevel(Level.ERROR)
+    //log.setLevel(Level.ERROR)
+    
+    val df_MasterSchemaJSON = sqlContext.read.option("multiLine", true).json("D:/masterSchema.json").schema
+    val df_InputJSON = sqlContext.read.option("multiLine", true).schema(df_MasterSchemaJSON).json("D:/sample.json")
+    df_InputJSON.show(false)
+    val flattenedDataFrame = flattenDataframe(df_InputJSON)
+    flattenedDataFrame.show(400)
+    flattenedDataFrame.write.json("D:/output/2")
+    }
 }
