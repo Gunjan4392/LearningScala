@@ -1,0 +1,36 @@
+package com.impetus.spark.udemy
+
+import org.apache.spark._
+import org.apache.spark.SparkContext._
+import org.apache.log4j._
+import org.apache.spark.sql.SQLContext
+import scala.collection.Map
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.catalyst.plans.logical.With
+
+/** A csv file consists of */
+object friendsByAge {
+
+  System.setProperty("hadoop.home.dir", "D:\\Spark\\WinUtils")
+  // Set the log level to only print errors
+  Logger.getLogger("org").setLevel(Level.ERROR)
+
+  // Create a SparkContext using every core of the local machine, named RatingsCounter
+  val sc = new SparkContext("local[*]", "FriendsByAge")
+  val sqlContext = new SQLContext(sc)
+  val spark = sqlContext.sparkSession
+  import spark.implicits._
+
+  def main(args: Array[String]) {
+    val lines = spark.read.csv("../fakefriends.csv")
+    val ageFriends = lines.select($"_c2" cast "int" as "age", $"_c3" cast "int" as "friends")
+
+    val countFriendsByAge = ageFriends.select("age", "friends").withColumn("count", lit(1))
+
+    val sumFriendsByAge = countFriendsByAge.groupBy("age").agg(expr("sum(friends) as friends"), expr("sum(count) as count"))
+    val avgFriendsPerAge = sumFriendsByAge.select($"age", $"friends" / $"count").orderBy(asc("age"))
+    avgFriendsPerAge.show()
+  }
+}
