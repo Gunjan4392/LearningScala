@@ -7,6 +7,8 @@ Udemy Course -- https://www.udemy.com/scala-and-spark-2-getting-started/learn/le
 
 Scala Online -- https://scalafiddle.io/
 
+FileUtil -- https://commons.apache.org/proper/commons-io/javadocs/api-release/index.html?org/apache/commons/io/FilenameUtils.html
+
 Using IntelliJIdea for execution..
 
 
