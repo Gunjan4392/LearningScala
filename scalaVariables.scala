@@ -5,6 +5,12 @@
 		Reassignment of variable is not allowed in case of val.
 **/
 
+//Declare Empty Variables
+
+var longVar = 0:Long
+var intVar = 0:Int
+var arrayString = Array[String]()
+
 //Print the greater number
 		val c=(math.random * 100).toInt
 		println("Value of c = " + c)
