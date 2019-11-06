@@ -17,6 +17,7 @@ Using IntelliJIdea for execution..
 *  Directed Acyclic Graph(DAG) Engine optimizes workflows in SPark SCALA.
 *  By default, Spark creates one partition for each block of the file (blocks being 128MB by default in HDFS)
 *  Spark applications run as independent sets of processes on a cluster, coordinated by the SparkContext object in your main program (called the driver program).
+*  To start working with Spark DataFrames, you first have to create a SparkSession object from your SparkContext. You can think of the SparkContext as your connection to the cluster and the SparkSession as your interface with that connection.
 
 
 SPARK
