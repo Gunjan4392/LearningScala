@@ -23,8 +23,11 @@ Using IntelliJIdea for execution..
 SPARK
 
 •	Every Spark application consists of a driver program that runs the user’s main function and executes various parallel operations on a cluster. 
-•	The main abstraction Spark provides is a resilient distributed dataset (RDD), which is a collection of elements partitioned across the nodes of the cluster that can be operated on in parallel.
+•	The main abstraction Spark provides is a resilient distributed dataset (RDD), which is a collection of elements partitioned across the nodes of the cluster that can be operated on in parallel. -- Apache Spark (Core)
 •	A second abstraction in Spark is shared variables that can be used in parallel operations. By default, when Spark runs a function in parallel as a set of tasks on different nodes, it ships a copy of each variable used in the function to each task. Sometimes, a variable need to be shared across tasks, or between tasks and the driver program. Spark supports two types of shared variables: broadcast variables, which can be used to cache a value in memory on all nodes, and accumulators, which are variables that are only “added” to, such as counters and sums.
+•	This is an abstraction of Spark’s core API. Whereas the core API works with RDD, and all transformations are defined by the developer explicitly, Spark SQL represents the RDD as so-called DataFrames. -- Spark SQL
+•	REPARTITIONS:
+	Spark doesn’t adjust the the number of partitions when a large DataFrame id filtered. For example, if your initial DataFrame had say 1 billion rows. "initialDf” with 1 billion records may have had 15000 partitions, and when that is filtered to “filteredDf” with 1000 rows then “filteredDf” will still have 15k partitions, which means most partitions will not have any data.
 o	spark-shell
 •	Broadcast Variable:
 o	It’s a read-only global variable, which all nodes of a cluster can read. Think of them more like as a lookup variable.
